@@ -3,6 +3,7 @@ package ly.mens.pivotjot;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
+import android.support.v4.content.LocalBroadcastManager;
 
 import java.util.ArrayList;
 
@@ -46,8 +47,7 @@ public class PivotalService extends IntentService {
     }
 
     private void sendLocalBroadcast(Intent intent) {
-//        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-        sendBroadcast(intent);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     @Override

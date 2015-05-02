@@ -29,4 +29,9 @@ public class Project implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         GsonCreator.writeToParcel(dest, this);
     }
+
+    @Override
+    public String toString() {
+        return projectName;
+    }
 }

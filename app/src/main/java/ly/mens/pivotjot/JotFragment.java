@@ -7,17 +7,22 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
+import ly.mens.pivotjot.model.Project;
 
 
 /**
@@ -28,11 +33,14 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
 
     @InjectView(R.id.text)
     TextView titleText;
+    @InjectView(R.id.project)
+    Spinner projectSpinner;
+
+    private ProjectAdapter projectAdp;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // TODO: Add drop-down box of projects
         return inflater.inflate(R.layout.fragment_jot, container, false);
     }
 
@@ -41,6 +49,8 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
         super.onViewCreated(view, savedInstanceState);
         ButterKnife.inject(this, view);
         titleText.setOnEditorActionListener(this);
+        projectAdp = new ProjectAdapter(getActivity());
+        projectSpinner.setAdapter(projectAdp);
     }
 
     @Override
@@ -66,16 +76,15 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
         filter.addAction(PivotalService.BROADCAST_POST_SUCCESS);
         filter.addAction(PivotalService.BROADCAST_AUTH_ERROR);
         filter.addAction(PivotalService.BROADCAST_NETWORK_ERROR);
-//        LocalBroadcastManager.getInstance(getActivity())
-        getActivity()
+        LocalBroadcastManager.getInstance(getActivity())
                 .registerReceiver(receiver, filter);
+        PivotalService.Methods.listProject(getActivity());
     }
 
     @Override
     public void onPause() {
         super.onPause();
-//        LocalBroadcastManager.getInstance(getActivity())
-        getActivity()
+        LocalBroadcastManager.getInstance(getActivity())
                 .unregisterReceiver(receiver);
     }
 
@@ -93,9 +102,15 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
             Toast.makeText(getActivity(), R.string.error_no_story, Toast.LENGTH_SHORT).show();
             return;
         }
+        Object selected = projectSpinner.getSelectedItem();
+        if (!(selected instanceof Project)) {
+            Toast.makeText(getActivity(), R.string.error_no_project, Toast.LENGTH_SHORT).show();
+            return;
+        }
         // TODO: Show loading UI
         // Submit to Pivotal via service
-        PivotalService.Methods.postStory(getActivity(), 0, title);
+        PivotalService.Methods.postStory(getActivity(), ((Project)selected).projectId, title);
+
     }
 
     private BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -118,7 +133,12 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
                     Toast.makeText(context, R.string.error_network, Toast.LENGTH_SHORT).show();
                     break;
                 case PivotalService.BROADCAST_PROJECT_LIST:
-                    // TODO: Display in drop-down box
+                    if (projectAdp != null) {
+                        List<Project> projects = intent.getParcelableArrayListExtra(PivotalService.EXTRA_PROJECTS);
+                        // TODO: Replace with custom list management to allow replacing whole list
+                        projectAdp.clear();
+                        projectAdp.addAll(projects);
+                    }
                     break;
                 case PivotalService.BROADCAST_POST_SUCCESS:
                     Toast.makeText(context, R.string.post_success, Toast.LENGTH_SHORT).show();

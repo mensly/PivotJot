@@ -4,6 +4,7 @@
     <string name="hint_title">Story Title</string>
     <string name="btn_submit">Submit</string>
     <string name="error_no_story">Input a story title</string>
+    <string name="error_no_project">No project selected</string>
     <string name="error_network">Network error occurred, check your connection</string>
     <string name="error_auth">Authentication error occurred, re-enter your credentials</string>
     <string name="post_success">Story Added</string>
