@@ -135,9 +135,7 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
                 case PivotalService.BROADCAST_PROJECT_LIST:
                     if (projectAdp != null) {
                         List<Project> projects = intent.getParcelableArrayListExtra(PivotalService.EXTRA_PROJECTS);
-                        // TODO: Replace with custom list management to allow replacing whole list
-                        projectAdp.clear();
-                        projectAdp.addAll(projects);
+                        projectAdp.replaceAll(projects);
                     }
                     break;
                 case PivotalService.BROADCAST_POST_SUCCESS:
