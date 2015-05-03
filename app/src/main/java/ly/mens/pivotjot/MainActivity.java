@@ -44,6 +44,9 @@ public class MainActivity extends AppCompatActivity {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main, menu);
         logoutItem = menu.findItem(R.id.menu_logout);
+        if (getFragmentManager().findFragmentById(R.id.fragment_overlay) instanceof LoginFragment) {
+            logoutItem.setEnabled(false);
+        }
         return true;
     }
 
@@ -69,7 +72,9 @@ public class MainActivity extends AppCompatActivity {
             // Already animating
             return;
         }
-        logoutItem.setEnabled(false);
+        if (logoutItem != null) {
+            logoutItem.setEnabled(false);
+        }
         overlayContainer.setAlpha(0);
         overlayContainer.setVisibility(View.VISIBLE);
         fm.beginTransaction().add(R.id.fragment_overlay, new LoginFragment()).commit();
