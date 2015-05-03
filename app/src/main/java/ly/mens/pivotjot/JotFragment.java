@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
@@ -21,6 +22,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Arrays;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -40,6 +42,8 @@ import ly.mens.pivotjot.model.StoryType;
 public class JotFragment extends Fragment implements TextView.OnEditorActionListener {
 
     private static final String KEY_SELECTED_ID = "selected";
+    private static final String KEY_STORY_TYPE = "type";
+    private static final String KEY_DESCRIPTION = "description";
 
     @InjectView(R.id.text)
     TextView titleText;
@@ -75,12 +79,24 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
         titleText.setOnEditorActionListener(this);
         projectAdp = new ProjectAdapter(context);
         projectSpinner.setAdapter(projectAdp);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         if (projectAdp.getCount() > 0) {
-            int selectedId = PreferenceManager.getDefaultSharedPreferences(context).getInt(KEY_SELECTED_ID, 0);
+            int selectedId = prefs.getInt(KEY_SELECTED_ID, 0);
             projectSpinner.setSelection(projectAdp.indexOf(selectedId));
         }
         EnumAdapter<StoryType> typeAdp = new EnumAdapter<>(context, StoryType.class);
         typeSpinner.setAdapter(typeAdp);
+        String typeString = prefs.getString(KEY_STORY_TYPE, null);
+        if (typeString != null) {
+            try {
+                StoryType type = Enum.valueOf(StoryType.class, typeString);
+                typeSpinner.setSelection(Arrays.asList(StoryType.values()).indexOf(type));
+            }
+            catch (IllegalArgumentException e) {
+                // Ignore if type does not exist
+            }
+        }
+        includeDescription.setChecked(prefs.getBoolean(KEY_DESCRIPTION, true));
     }
 
     @Override
@@ -130,13 +146,15 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
         super.onPause();
         LocalBroadcastManager.getInstance(getActivity())
                 .unregisterReceiver(receiver);
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
 
         Object selected = projectSpinner.getSelectedItem();
         if (selected instanceof Project) {
-            PreferenceManager.getDefaultSharedPreferences(getActivity()).edit()
-                    .putInt(KEY_SELECTED_ID, ((Project) selected).getId())
-                    .apply();
+            editor.putInt(KEY_SELECTED_ID, ((Project) selected).getId());
         }
+        editor.putString(KEY_STORY_TYPE, typeSpinner.getSelectedItem().toString());
+        editor.putBoolean(KEY_DESCRIPTION, includeDescription.isChecked());
+        editor.apply();
     }
 
     @Override
