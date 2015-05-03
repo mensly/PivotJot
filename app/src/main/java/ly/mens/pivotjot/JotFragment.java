@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,7 +25,10 @@ import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import butterknife.InjectViews;
 import butterknife.OnClick;
+import ly.mens.pivotjot.adp.EnumAdapter;
+import ly.mens.pivotjot.adp.ProjectAdapter;
 import ly.mens.pivotjot.model.Project;
 import ly.mens.pivotjot.model.StoryType;
 
@@ -43,6 +47,12 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
     Spinner projectSpinner;
     @InjectView(R.id.btn_submit)
     Button submitButton;
+    @InjectView(R.id.type)
+    Spinner typeSpinner;
+    @InjectView(R.id.description)
+    CheckBox includeDescription;
+    @InjectViews({R.id.text, R.id.type, R.id.description, R.id.project})
+    List<View> actionViews;
 
     private ProjectAdapter projectAdp;
 
@@ -61,13 +71,16 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ButterKnife.inject(this, view);
+        Context context = getActivity();
         titleText.setOnEditorActionListener(this);
-        projectAdp = new ProjectAdapter(getActivity());
+        projectAdp = new ProjectAdapter(context);
         projectSpinner.setAdapter(projectAdp);
         if (projectAdp.getCount() > 0) {
-            int selectedId = PreferenceManager.getDefaultSharedPreferences(getActivity()).getInt(KEY_SELECTED_ID, 0);
+            int selectedId = PreferenceManager.getDefaultSharedPreferences(context).getInt(KEY_SELECTED_ID, 0);
             projectSpinner.setSelection(projectAdp.indexOf(selectedId));
         }
+        EnumAdapter<StoryType> typeAdp = new EnumAdapter<>(context, StoryType.class);
+        typeSpinner.setAdapter(typeAdp);
     }
 
     @Override
@@ -145,9 +158,18 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
             Toast.makeText(getActivity(), R.string.error_no_project, Toast.LENGTH_SHORT).show();
             return;
         }
+        Object itemType = typeSpinner.getSelectedItem();
+        if (!(itemType instanceof StoryType)) {
+            Toast.makeText(getActivity(), R.string.error_no_type, Toast.LENGTH_SHORT).show();
+            return;
+        }
         // Submit to Pivotal via service
+        for (View actionView : actionViews) {
+            actionView.setEnabled(false);
+        }
         submitButton.setEnabled(false);
-        PivotalService.postStory(getActivity(), ((Project) selected).getId(), title, StoryType.Feature, true);
+        PivotalService.postStory(getActivity(), ((Project) selected).getId(), title,
+                (StoryType)itemType, includeDescription.isChecked());
 
     }
 
@@ -165,6 +187,9 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
             if (action == null) {
                 // Handle invalid data
                 return;
+            }
+            for (View actionView : actionViews) {
+                actionView.setEnabled(true);
             }
             switch (action) {
                 case PivotalService.BROADCAST_AUTH_ERROR:

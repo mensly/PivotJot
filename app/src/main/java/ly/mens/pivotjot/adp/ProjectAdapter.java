@@ -1,4 +1,4 @@
-package ly.mens.pivotjot;
+package ly.mens.pivotjot.adp;
 
 import android.content.Context;
 import android.preference.PreferenceManager;

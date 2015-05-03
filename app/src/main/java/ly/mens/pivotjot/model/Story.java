@@ -13,12 +13,12 @@ public class Story implements Parcelable {
     public static Creator<Story> CREATOR = new GsonCreator<>(Story.class);
 
     private String name;
-    private String storyType;
+    private String story_type;
     private String description;
 
     public Story(String name, StoryType storyType, String description) {
         this.name = name;
-        this.storyType = storyType.name().toLowerCase();
+        this.story_type = storyType.name().toLowerCase();
         this.description = description;
     }
 

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Base64;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -170,6 +171,7 @@ public class PivotalService extends IntentService {
         Writer writer = null;
         try {
             HttpURLConnection conn = (HttpURLConnection)new URL(String.format(ENDPOINT_POST, projectId)).openConnection();
+            conn.setRequestMethod("POST");
             conn.setDoInput(true);
             conn.setDoOutput(true);
             conn.addRequestProperty("X-TrackerToken", token);
@@ -190,10 +192,16 @@ public class PivotalService extends IntentService {
                     break;
                 default:
                     sendLocalBroadcast(new Intent(BROADCAST_NETWORK_ERROR));
+                    if (BuildConfig.DEBUG) {
+                        Log.e("Network", "Error: " + response);
+                        Log.d("Network", content);
+                    }
                     break;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            if (BuildConfig.DEBUG) {
+                e.printStackTrace();
+            }
             sendLocalBroadcast(new Intent(BROADCAST_NETWORK_ERROR));
         } finally {
             if (writer != null) {
