@@ -1,5 +1,6 @@
 package ly.mens.pivotjot;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -66,11 +67,15 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
     public void onResume() {
         super.onResume();
         // Display keyboard
+        titleText.requestFocus();
         titleText.postDelayed(new Runnable() {
             @Override
             public void run() {
-                InputMethodManager input = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                input.showSoftInput(titleText, InputMethodManager.SHOW_IMPLICIT);
+                if (titleText != null) {
+                    titleText.requestFocus();
+                    InputMethodManager input = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    input.showSoftInput(titleText, InputMethodManager.SHOW_IMPLICIT);
+                }
             }
         }, 300);
         submitButton.setEnabled(projectAdp.getCount() > 0);
@@ -82,7 +87,11 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
         filter.addAction(PivotalService.BROADCAST_NETWORK_ERROR);
         LocalBroadcastManager.getInstance(getActivity())
                 .registerReceiver(receiver, filter);
-        PivotalService.Methods.listProject(getActivity());
+        refreshProjectList();
+    }
+
+    public void refreshProjectList() {
+        PivotalService.listProject(getActivity());
     }
 
     @Override
@@ -114,8 +123,15 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
         // TODO: Show loading UI
         // Submit to Pivotal via service
         submitButton.setEnabled(false);
-        PivotalService.Methods.postStory(getActivity(), ((Project) selected).getId(), title);
+        PivotalService.postStory(getActivity(), ((Project) selected).getId(), title);
 
+    }
+
+    void showError(int errorText) {
+        if (getActivity() != null && getFragmentManager().findFragmentById(R.id.fragment_overlay) == null) {
+            // Only show errors when no overlay
+            Toast.makeText(getActivity(), errorText, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -130,14 +146,17 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
                 case PivotalService.BROADCAST_AUTH_ERROR:
                     if (intent.getBooleanExtra(PivotalService.EXTRA_HAS_TOKEN, false)) {
                         // Error related to error in attempting a request
-                        Toast.makeText(context, R.string.error_network, Toast.LENGTH_SHORT).show();
+                        showError(R.string.error_auth);
                     }
                     submitButton.setEnabled(projectAdp.getCount() > 0);
-                    // TODO: Show login fragment
+                    Activity activity = getActivity();
+                    if (activity instanceof MainActivity) {
+                        ((MainActivity) activity).showLogin();
+                    }
                     break;
                 case PivotalService.BROADCAST_NETWORK_ERROR:
                     // Display network error message
-                    Toast.makeText(context, R.string.error_network, Toast.LENGTH_SHORT).show();
+                    showError(R.string.error_network);
                     submitButton.setEnabled(projectAdp.getCount() > 0);
                     break;
                 case PivotalService.BROADCAST_PROJECT_LIST:

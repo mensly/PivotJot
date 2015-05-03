@@ -23,6 +23,7 @@ public class ProjectAdapter extends ArrayAdapter<Project> {
     private ProjectAdapter(Context context, List<Project> list) {
         super(context, android.R.layout.simple_spinner_dropdown_item, list);
         this.projects = list;
+        // TODO: Persist list of projects
     }
 
     @Override

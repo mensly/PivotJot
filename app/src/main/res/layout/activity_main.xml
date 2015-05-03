@@ -1,5 +1,26 @@
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/fragment_content"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:name="ly.mens.pivotjot.JotFragment" />
+    android:layout_height="match_parent">
+    <fragment
+        android:id="@+id/fragment_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:name="ly.mens.pivotjot.JotFragment"
+        tools:layout="@layout/fragment_jot" />
+    <ScrollView
+        android:id="@+id/overlay"
+        android:background="@color/overlay"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        tools:visibility="visible">
+        <FrameLayout
+            android:id="@+id/fragment_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <!--<include layout="@layout/fragment_login" />-->
+        </FrameLayout>
+    </ScrollView>
+</FrameLayout>

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Base64;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -22,6 +23,7 @@ import java.util.List;
 
 import ly.mens.pivotjot.model.Project;
 import ly.mens.pivotjot.model.Story;
+import ly.mens.pivotjot.model.User;
 
 /**
  * Service for abstracting Pivotal's REST API through Intents and Broadcasts
@@ -96,8 +98,38 @@ public class PivotalService extends IntentService {
     }
 
     private void authenticate(String username, String password) {
-        // TODO: Implement
-        sendLocalBroadcast(new Intent(BROADCAST_AUTH_SUCCESS));
+        Reader reader = null;
+        try {
+            HttpURLConnection conn = (HttpURLConnection)new URL(ENDPOINT_LOGIN).openConnection();
+            String encoded = new String(Base64.encode((username + ":" + password).getBytes("utf-8"), Base64.NO_WRAP), "utf-8");
+            conn.setRequestProperty("Authorization", "Basic " + encoded);
+            int response = conn.getResponseCode();
+            switch (response) {
+                case 200:
+                    reader = new InputStreamReader(conn.getInputStream());
+                    User user = GSON.fromJson(reader, User.class);
+                    token = user.getApiToken();
+                    PreferenceManager.getDefaultSharedPreferences(this).edit()
+                            .putString(KEY_TOKEN, token)
+                            .apply();
+                    sendLocalBroadcast(new Intent(BROADCAST_AUTH_SUCCESS));
+                    break;
+                case 403:
+                    sendLocalBroadcast(new Intent(BROADCAST_AUTH_ERROR)
+                            .putExtra(EXTRA_HAS_TOKEN, token != null));
+                    break;
+                default:
+                    sendLocalBroadcast(new Intent(BROADCAST_NETWORK_ERROR));
+                    break;
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (reader != null) {
+                try { reader.close(); } catch (IOException e) { }
+            }
+        }
     }
 
     private void listProjects() {
@@ -116,7 +148,8 @@ public class PivotalService extends IntentService {
                             .putExtra(EXTRA_PROJECTS, new ArrayList<>(projects)));
                     break;
                 case 403:
-                    sendLocalBroadcast(new Intent(BROADCAST_AUTH_ERROR));
+                    sendLocalBroadcast(new Intent(BROADCAST_AUTH_ERROR)
+                            .putExtra(EXTRA_HAS_TOKEN, token != null));
                     break;
                 default:
                     sendLocalBroadcast(new Intent(BROADCAST_NETWORK_ERROR));
@@ -154,7 +187,8 @@ public class PivotalService extends IntentService {
                     sendLocalBroadcast(new Intent(BROADCAST_POST_SUCCESS));
                     break;
                 case 403:
-                    sendLocalBroadcast(new Intent(BROADCAST_AUTH_ERROR));
+                    sendLocalBroadcast(new Intent(BROADCAST_AUTH_ERROR)
+                            .putExtra(EXTRA_HAS_TOKEN, token != null));
                     break;
                 default:
                     sendLocalBroadcast(new Intent(BROADCAST_NETWORK_ERROR));
@@ -170,25 +204,27 @@ public class PivotalService extends IntentService {
         }
     }
 
-    public static final class Methods {
-        private static Intent createIntent(Context context, String action) {
-            return new Intent(context, PivotalService.class).setAction(action);
-        }
+    private static Intent createIntent(Context context, String action) {
+        return new Intent(context, PivotalService.class).setAction(action);
+    }
 
-        public static void authenticate(Context context, String username, String password) {
-            context.startService(createIntent(context, ACTION_AUTHENTICATE)
-                    .putExtra(EXTRA_USERNAME, username)
-                    .putExtra(EXTRA_PASSWORD, password));
-        }
+    public static void authenticate(Context context, String username, String password) {
+        context.startService(createIntent(context, ACTION_AUTHENTICATE)
+                .putExtra(EXTRA_USERNAME, username)
+                .putExtra(EXTRA_PASSWORD, password));
+    }
 
-        public static void listProject(Context context) {
-            context.startService(createIntent(context, ACTION_LIST_PROJECTS));
-        }
+    public static void listProject(Context context) {
+        context.startService(createIntent(context, ACTION_LIST_PROJECTS));
+    }
 
-        public static void postStory(Context context, int projectId, String title) {
-            context.startService(createIntent(context, ACTION_POST)
-                    .putExtra(EXTRA_PROJECT_ID, projectId)
-                    .putExtra(EXTRA_TITLE, title));
-        }
+    public static void postStory(Context context, int projectId, String title) {
+        context.startService(createIntent(context, ACTION_POST)
+                .putExtra(EXTRA_PROJECT_ID, projectId)
+                .putExtra(EXTRA_TITLE, title));
+    }
+
+    public static boolean hasToken(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context).contains(KEY_TOKEN);
     }
 }

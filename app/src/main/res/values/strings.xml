@@ -9,4 +9,12 @@
     <string name="error_auth">Authentication error occurred, re-enter your credentials</string>
     <string name="post_success">Story Added</string>
     <string name="description_placeholder">This story was jotted down with PivotJot, more information should be added manually before moving out of Icebox. http://bit.ly/pivotjot</string>
+    <string name="hint_username">Username</string>
+    <string name="hint_password">Password</string>
+    <string name="login_prompt">Log in with your Pivotal Tracker credentials</string>
+    <string name="btn_forgot_pw">Forgot Password</string>
+    <string name="btn_login">Login</string>
+    <string name="error_username">Enter username</string>
+    <string name="error_password">Enter password</string>
+    <string name="error_login">Incorrect username or password</string>
 </resources>
