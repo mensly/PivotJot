@@ -78,7 +78,7 @@ public class PivotalService extends IntentService {
             // Handle invalid data
             return;
         }
-        if (token == null) {
+        if (token == null && !ACTION_AUTHENTICATE.equals(action)) {
             // Unauthenticated user
             sendLocalBroadcast(new Intent(BROADCAST_AUTH_ERROR).putExtra(EXTRA_HAS_TOKEN, false));
             return;
@@ -124,7 +124,7 @@ public class PivotalService extends IntentService {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            sendLocalBroadcast(new Intent(BROADCAST_NETWORK_ERROR));
         } finally {
             if (reader != null) {
                 try { reader.close(); } catch (IOException e) { }
@@ -226,5 +226,9 @@ public class PivotalService extends IntentService {
 
     public static boolean hasToken(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context).contains(KEY_TOKEN);
+    }
+
+    public static void logout(Context context) {
+        PreferenceManager.getDefaultSharedPreferences(context).edit().remove(KEY_TOKEN).commit();
     }
 }

@@ -6,6 +6,9 @@ import android.app.FragmentManager;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 
 import butterknife.ButterKnife;
@@ -18,12 +21,14 @@ import ly.mens.pivotjot.util.SimpleAnimatorListener;
  * Created by mensly on 3/05/2015.
  */
 public class MainActivity extends AppCompatActivity {
-    private static final boolean TEST_LOGIN = BuildConfig.DEBUG;
+    private static final boolean TEST_LOGIN = false;
 
     @InjectView(R.id.overlay)
     View overlayContainer;
     @InjectView(R.id.fragment_overlay)
     View overlayFragment;
+
+    MenuItem logoutItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +37,25 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.inject(this);
         if (savedInstanceState == null && (TEST_LOGIN || !PivotalService.hasToken(this))) {
             showLogin();
+        }
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main, menu);
+        logoutItem = menu.findItem(R.id.menu_logout);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_logout:
+                PivotalService.logout(this);
+                showLogin();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 
@@ -45,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
             // Already animating
             return;
         }
+        logoutItem.setEnabled(false);
         overlayContainer.setAlpha(0);
         overlayContainer.setVisibility(View.VISIBLE);
         fm.beginTransaction().add(R.id.fragment_overlay, new LoginFragment()).commit();
@@ -60,10 +85,7 @@ public class MainActivity extends AppCompatActivity {
             // Already animating
             return;
         }
-        Fragment main = getFragmentManager().findFragmentById(R.id.fragment_content);
-        if (main instanceof JotFragment) {
-            ((JotFragment) main).refreshProjectList();
-        }
+        logoutItem.setEnabled(true);
         int animateTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
         overlayContainer.animate().alpha(0).setDuration(animateTime).setListener(new SimpleAnimatorListener()
         {

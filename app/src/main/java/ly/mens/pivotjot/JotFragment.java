@@ -67,6 +67,24 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
     public void onResume() {
         super.onResume();
         // Display keyboard
+        // Listen for relevant events from back end service
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(PivotalService.BROADCAST_PROJECT_LIST);
+        filter.addAction(PivotalService.BROADCAST_POST_SUCCESS);
+        filter.addAction(PivotalService.BROADCAST_AUTH_ERROR);
+        filter.addAction(PivotalService.BROADCAST_NETWORK_ERROR);
+        LocalBroadcastManager.getInstance(getActivity())
+                .registerReceiver(receiver, filter);
+        resume();
+    }
+
+    public void onLoggedIn() {
+        projectAdp.clear();
+        resume();
+    }
+
+    private void resume() {
+        PivotalService.listProject(getActivity());
         titleText.requestFocus();
         titleText.postDelayed(new Runnable() {
             @Override
@@ -79,19 +97,6 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
             }
         }, 300);
         submitButton.setEnabled(projectAdp.getCount() > 0);
-        // Listen for relevant events from back end service
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(PivotalService.BROADCAST_PROJECT_LIST);
-        filter.addAction(PivotalService.BROADCAST_POST_SUCCESS);
-        filter.addAction(PivotalService.BROADCAST_AUTH_ERROR);
-        filter.addAction(PivotalService.BROADCAST_NETWORK_ERROR);
-        LocalBroadcastManager.getInstance(getActivity())
-                .registerReceiver(receiver, filter);
-        refreshProjectList();
-    }
-
-    public void refreshProjectList() {
-        PivotalService.listProject(getActivity());
     }
 
     @Override
@@ -120,7 +125,6 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
             Toast.makeText(getActivity(), R.string.error_no_project, Toast.LENGTH_SHORT).show();
             return;
         }
-        // TODO: Show loading UI
         // Submit to Pivotal via service
         submitButton.setEnabled(false);
         PivotalService.postStory(getActivity(), ((Project) selected).getId(), title);

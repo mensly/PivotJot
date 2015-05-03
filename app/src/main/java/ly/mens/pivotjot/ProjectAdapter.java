@@ -37,5 +37,9 @@ public class ProjectAdapter extends ArrayAdapter<Project> {
         notifyDataSetChanged();
     }
 
-
+    @Override
+    public void clear() {
+        super.clear();
+        // TODO: Sync with persistent list
+    }
 }

@@ -77,6 +77,7 @@ public class LoginFragment extends Fragment implements TextView.OnEditorActionLi
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(PivotalService.BROADCAST_AUTH_SUCCESS);
         intentFilter.addAction(PivotalService.BROADCAST_AUTH_ERROR);
+        intentFilter.addAction(PivotalService.BROADCAST_NETWORK_ERROR);
         LocalBroadcastManager.getInstance(getActivity())
                 .registerReceiver(receiver, new IntentFilter(PivotalService.BROADCAST_AUTH_SUCCESS));
     }
@@ -138,7 +139,14 @@ public class LoginFragment extends Fragment implements TextView.OnEditorActionLi
                 case PivotalService.BROADCAST_AUTH_ERROR:
                     Toast.makeText(getActivity(), R.string.error_login, Toast.LENGTH_SHORT).show();
                     break;
+                case PivotalService.BROADCAST_NETWORK_ERROR:
+                    Toast.makeText(getActivity(), R.string.error_network, Toast.LENGTH_SHORT).show();
+                    break;
                 case PivotalService.BROADCAST_AUTH_SUCCESS:
+                    Fragment main = getFragmentManager().findFragmentById(R.id.fragment_content);
+                    if (main instanceof JotFragment) {
+                        ((JotFragment) main).onLoggedIn();
+                    }
                     Activity activity = getActivity();
                     if (activity instanceof MainActivity) {
                         ((MainActivity) activity).clearOverlay();
