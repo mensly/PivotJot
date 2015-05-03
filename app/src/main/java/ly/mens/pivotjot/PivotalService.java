@@ -23,6 +23,7 @@ import java.util.List;
 
 import ly.mens.pivotjot.model.Project;
 import ly.mens.pivotjot.model.Story;
+import ly.mens.pivotjot.model.StoryType;
 import ly.mens.pivotjot.model.User;
 
 /**
@@ -37,7 +38,7 @@ public class PivotalService extends IntentService {
 
     public static final String EXTRA_USERNAME = PREFIX + "username";
     public static final String EXTRA_PASSWORD = PREFIX + "password";
-    public static final String EXTRA_TITLE = PREFIX + "title";
+    public static final String EXTRA_STORY = PREFIX + "story";
     public static final String EXTRA_PROJECT_ID = PREFIX + "project";
     public static final String EXTRA_PROJECTS = PREFIX + "projects";
     public static final String EXTRA_HAS_TOKEN = PREFIX + "has_token";
@@ -92,7 +93,7 @@ public class PivotalService extends IntentService {
                 authenticate(intent.getStringExtra(EXTRA_USERNAME), intent.getStringExtra(EXTRA_PASSWORD));
                 break;
             case ACTION_POST:
-                postStory(intent.getIntExtra(EXTRA_PROJECT_ID, 0), intent.getStringExtra(EXTRA_TITLE));
+                postStory(intent.getIntExtra(EXTRA_PROJECT_ID, 0), intent.<Story>getParcelableExtra(EXTRA_STORY));
                 break;
         }
     }
@@ -164,9 +165,7 @@ public class PivotalService extends IntentService {
         }
     }
 
-    private void postStory(int projectId, String title) {
-        // TODO: Allow configuration of description and story type
-        Story story = new Story(title, getString(R.string.description_placeholder));
+    private void postStory(int projectId, Story story) {
         String content = GSON.toJson(story);
         Writer writer = null;
         try {
@@ -217,10 +216,13 @@ public class PivotalService extends IntentService {
         context.startService(createIntent(context, ACTION_LIST_PROJECTS));
     }
 
-    public static void postStory(Context context, int projectId, String title) {
+    public static void postStory(Context context, int projectId, String title,
+                                 StoryType storyType, boolean placeholderDescription) {
+        Story story = new Story(title, storyType, placeholderDescription ?
+                context.getString(R.string.description_placeholder) : "");
         context.startService(createIntent(context, ACTION_POST)
                 .putExtra(EXTRA_PROJECT_ID, projectId)
-                .putExtra(EXTRA_TITLE, title));
+                .putExtra(EXTRA_STORY, story));
     }
 
     public static boolean hasToken(Context context) {

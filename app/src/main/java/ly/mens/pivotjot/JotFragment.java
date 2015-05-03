@@ -26,6 +26,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import ly.mens.pivotjot.model.Project;
+import ly.mens.pivotjot.model.StoryType;
 
 
 /**
@@ -146,7 +147,7 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
         }
         // Submit to Pivotal via service
         submitButton.setEnabled(false);
-        PivotalService.postStory(getActivity(), ((Project) selected).getId(), title);
+        PivotalService.postStory(getActivity(), ((Project) selected).getId(), title, StoryType.Feature, true);
 
     }
 
