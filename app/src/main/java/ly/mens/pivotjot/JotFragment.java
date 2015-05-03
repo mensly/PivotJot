@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.KeyEvent;
@@ -33,6 +34,8 @@ import ly.mens.pivotjot.model.Project;
  */
 public class JotFragment extends Fragment implements TextView.OnEditorActionListener {
 
+    private static final String KEY_SELECTED_ID = "selected";
+
     @InjectView(R.id.text)
     TextView titleText;
     @InjectView(R.id.project)
@@ -41,6 +44,11 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
     Button submitButton;
 
     private ProjectAdapter projectAdp;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
 
     @Nullable
     @Override
@@ -55,6 +63,10 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
         titleText.setOnEditorActionListener(this);
         projectAdp = new ProjectAdapter(getActivity());
         projectSpinner.setAdapter(projectAdp);
+        if (projectAdp.getCount() > 0) {
+            int selectedId = PreferenceManager.getDefaultSharedPreferences(getActivity()).getInt(KEY_SELECTED_ID, 0);
+            projectSpinner.setSelection(projectAdp.indexOf(selectedId));
+        }
     }
 
     @Override
@@ -104,6 +116,13 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
         super.onPause();
         LocalBroadcastManager.getInstance(getActivity())
                 .unregisterReceiver(receiver);
+
+        Object selected = projectSpinner.getSelectedItem();
+        if (selected instanceof Project) {
+            PreferenceManager.getDefaultSharedPreferences(getActivity()).edit()
+                    .putInt(KEY_SELECTED_ID, ((Project) selected).getId())
+                    .apply();
+        }
     }
 
     @Override

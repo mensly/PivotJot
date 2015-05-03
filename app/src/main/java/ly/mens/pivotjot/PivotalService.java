@@ -141,8 +141,7 @@ public class PivotalService extends IntentService {
             switch (response) {
                 case 200:
                     reader = new InputStreamReader(conn.getInputStream());
-                    Type listType = new TypeToken<List<Project>>() {
-                    }.getType();
+                    Type listType = new TypeToken<List<Project>>() {}.getType();
                     List<Project> projects = GSON.fromJson(reader, listType);
                     sendLocalBroadcast(new Intent(BROADCAST_PROJECT_LIST)
                             .putExtra(EXTRA_PROJECTS, new ArrayList<>(projects)));
