@@ -3,8 +3,6 @@ package ly.mens.pivotjot.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.google.gson.annotations.SerializedName;
-
 import ly.mens.pivotjot.util.GsonCreator;
 
 /**
@@ -14,11 +12,8 @@ import ly.mens.pivotjot.util.GsonCreator;
 public class Project implements Parcelable {
     public static final Creator<Project> CREATOR = new GsonCreator<>(Project.class);
 
-    @SerializedName("project_id")
-    public int projectId;
-
-    @SerializedName("project_name")
-    public String projectName;
+    private int id;
+    private String name;
 
     @Override
     public int describeContents() {
@@ -30,8 +25,12 @@ public class Project implements Parcelable {
         GsonCreator.writeToParcel(dest, this);
     }
 
+    public int getId() {
+        return id;
+    }
+
     @Override
     public String toString() {
-        return projectName;
+        return name;
     }
 }

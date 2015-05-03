@@ -6,9 +6,22 @@ import android.content.Intent;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
+import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import ly.mens.pivotjot.model.Project;
+import ly.mens.pivotjot.model.Story;
 
 /**
  * Service for abstracting Pivotal's REST API through Intents and Broadcasts
@@ -34,6 +47,11 @@ public class PivotalService extends IntentService {
     public static final String BROADCAST_NETWORK_ERROR = PREFIX + "error_network";
 
     private static final String KEY_TOKEN = "token";
+    private static final String ENDPOINT_LOGIN = "https://www.pivotaltracker.com/services/v5/me";
+    private static final String ENDPOINT_PROJECTS = "https://www.pivotaltracker.com/services/v5/projects";
+    private static final String ENDPOINT_POST = "https://www.pivotaltracker.com/services/v5/projects/%d/stories";
+
+    private static final Gson GSON = new Gson();
 
     private String token;
 
@@ -83,22 +101,73 @@ public class PivotalService extends IntentService {
     }
 
     private void listProjects() {
-        // TODO: Implement
-        ArrayList<Project> projects = new ArrayList<>(5);
-        for (int i = 0; i < 5; i++) {
-            Project project = new Project();
-            project.projectId = i;
-            project.projectName = "Sample Data " + i;
-            projects.add(project);
+        Reader reader = null;
+        try {
+            HttpURLConnection conn = (HttpURLConnection)new URL(ENDPOINT_PROJECTS).openConnection();
+            conn.addRequestProperty("X-TrackerToken", token);
+            int response = conn.getResponseCode();
+            switch (response) {
+                case 200:
+                    reader = new InputStreamReader(conn.getInputStream());
+                    Type listType = new TypeToken<List<Project>>() {
+                    }.getType();
+                    List<Project> projects = GSON.fromJson(reader, listType);
+                    sendLocalBroadcast(new Intent(BROADCAST_PROJECT_LIST)
+                            .putExtra(EXTRA_PROJECTS, new ArrayList<>(projects)));
+                    break;
+                case 403:
+                    sendLocalBroadcast(new Intent(BROADCAST_AUTH_ERROR));
+                    break;
+                default:
+                    sendLocalBroadcast(new Intent(BROADCAST_NETWORK_ERROR));
+                    break;
+            }
+
+        } catch (IOException e) {
+            sendLocalBroadcast(new Intent(BROADCAST_NETWORK_ERROR));
+        } finally {
+            if (reader != null) {
+                try { reader.close(); } catch (IOException e) { }
+            }
         }
-        sendLocalBroadcast(new Intent(BROADCAST_PROJECT_LIST)
-                .putExtra(EXTRA_PROJECTS, projects));
     }
 
     private void postStory(int projectId, String title) {
-        // TODO: Implement
         // TODO: Allow configuration of description and story type
-        sendLocalBroadcast(new Intent(BROADCAST_POST_SUCCESS));
+        Story story = new Story(title, getString(R.string.description_placeholder));
+        String content = GSON.toJson(story);
+        Writer writer = null;
+        try {
+            HttpURLConnection conn = (HttpURLConnection)new URL(String.format(ENDPOINT_POST, projectId)).openConnection();
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+            conn.addRequestProperty("X-TrackerToken", token);
+            conn.addRequestProperty("Content-Type", "application/json");
+            conn.connect();
+            writer = new OutputStreamWriter(conn.getOutputStream());
+            writer.write(content);
+            writer.close();
+            int response = conn.getResponseCode();
+            switch (response) {
+                case 200:
+                case 201:
+                    sendLocalBroadcast(new Intent(BROADCAST_POST_SUCCESS));
+                    break;
+                case 403:
+                    sendLocalBroadcast(new Intent(BROADCAST_AUTH_ERROR));
+                    break;
+                default:
+                    sendLocalBroadcast(new Intent(BROADCAST_NETWORK_ERROR));
+                    break;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            sendLocalBroadcast(new Intent(BROADCAST_NETWORK_ERROR));
+        } finally {
+            if (writer != null) {
+                try { writer.close(); } catch (IOException e) { }
+            }
+        }
     }
 
     public static final class Methods {

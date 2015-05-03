@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,6 +36,8 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
     TextView titleText;
     @InjectView(R.id.project)
     Spinner projectSpinner;
+    @InjectView(R.id.btn_submit)
+    Button submitButton;
 
     private ProjectAdapter projectAdp;
 
@@ -70,6 +73,7 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
                 input.showSoftInput(titleText, InputMethodManager.SHOW_IMPLICIT);
             }
         }, 300);
+        submitButton.setEnabled(projectAdp.getCount() > 0);
         // Listen for relevant events from back end service
         IntentFilter filter = new IntentFilter();
         filter.addAction(PivotalService.BROADCAST_PROJECT_LIST);
@@ -109,7 +113,8 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
         }
         // TODO: Show loading UI
         // Submit to Pivotal via service
-        PivotalService.Methods.postStory(getActivity(), ((Project)selected).projectId, title);
+        submitButton.setEnabled(false);
+        PivotalService.Methods.postStory(getActivity(), ((Project) selected).getId(), title);
 
     }
 
@@ -127,20 +132,26 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
                         // Error related to error in attempting a request
                         Toast.makeText(context, R.string.error_network, Toast.LENGTH_SHORT).show();
                     }
+                    submitButton.setEnabled(projectAdp.getCount() > 0);
                     // TODO: Show login fragment
                     break;
                 case PivotalService.BROADCAST_NETWORK_ERROR:
+                    // Display network error message
                     Toast.makeText(context, R.string.error_network, Toast.LENGTH_SHORT).show();
+                    submitButton.setEnabled(projectAdp.getCount() > 0);
                     break;
                 case PivotalService.BROADCAST_PROJECT_LIST:
-                    if (projectAdp != null) {
-                        List<Project> projects = intent.getParcelableArrayListExtra(PivotalService.EXTRA_PROJECTS);
-                        projectAdp.replaceAll(projects);
-                    }
+                    // Update list of available projects
+                    List<Project> projects = intent.getParcelableArrayListExtra(PivotalService.EXTRA_PROJECTS);
+                    projectAdp.replaceAll(projects);
+                    projectSpinner.setEnabled(projects.size() > 1);
+                    submitButton.setEnabled(projectAdp.getCount() > 0);
                     break;
                 case PivotalService.BROADCAST_POST_SUCCESS:
+                    // Refresh the UI so the user can enter a new story
                     Toast.makeText(context, R.string.post_success, Toast.LENGTH_SHORT).show();
                     titleText.setText(null);
+                    submitButton.setEnabled(projectAdp.getCount() > 0);
                     break;
             }
         }

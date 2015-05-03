@@ -27,7 +27,7 @@ public class ProjectAdapter extends ArrayAdapter<Project> {
 
     @Override
     public long getItemId(int position) {
-        return getItem(position).projectId;
+        return getItem(position).getId();
     }
 
     public void replaceAll(Collection<Project> projects) {
