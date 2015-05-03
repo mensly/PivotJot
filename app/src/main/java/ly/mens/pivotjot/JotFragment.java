@@ -122,6 +122,7 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
 
     public void onLoggedIn() {
         projectAdp.clear();
+        titleText.setText(null);
         resume();
     }
 
