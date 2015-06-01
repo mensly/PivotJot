@@ -13,3 +13,5 @@ to modify it to suit your own purposes.
 If you're looking for a more feature-complete Android client for Pivotal 
 Tracker, I'd recommend [P-Tracking](https://play.google.com/store/apps/details?id=com.sdw.pivotprojects).
  However, it is quite out of date and can't do everything the desktop client can.
+
+A compiled version of this app can be found on [Google Play](http://bit.ly/pivotjot).
