@@ -11,6 +11,8 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,7 +41,7 @@ import ly.mens.pivotjot.model.StoryType;
  * Interface to input text to create a Pivotal story
  * Created by mensly on 3/05/2015.
  */
-public class JotFragment extends Fragment implements TextView.OnEditorActionListener {
+public class JotFragment extends Fragment implements TextView.OnEditorActionListener, TextWatcher {
 
     private static final String KEY_SELECTED_ID = "selected";
     private static final String KEY_STORY_TYPE = "type";
@@ -51,6 +53,8 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
     Spinner projectSpinner;
     @InjectView(R.id.btn_submit)
     Button submitButton;
+    @InjectView(R.id.hint_description)
+    View descriptionHint;
     @InjectView(R.id.type)
     Spinner typeSpinner;
     @InjectView(R.id.description)
@@ -59,6 +63,7 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
     List<View> actionViews;
 
     private ProjectAdapter projectAdp;
+    private float visibleHintAlpha;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -75,8 +80,12 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ButterKnife.inject(this, view);
+        if (savedInstanceState == null) {
+            visibleHintAlpha = descriptionHint.getAlpha();
+        }
         Context context = getActivity();
         titleText.setOnEditorActionListener(this);
+        titleText.addTextChangedListener(this);
         projectAdp = new ProjectAdapter(context);
         projectSpinner.setAdapter(projectAdp);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -187,8 +196,14 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
             actionView.setEnabled(false);
         }
         submitButton.setEnabled(false);
+        String description = null;
+        int splitTitle = title.indexOf(':');
+        if (0 < splitTitle && splitTitle < title.length() - 1) {
+            description = title.substring(splitTitle + 1, title.length());
+            title = title.substring(0, splitTitle);
+        }
         PivotalService.postStory(getActivity(), ((Project) selected).getId(), title,
-                (StoryType)itemType, includeDescription.isChecked());
+                (StoryType)itemType, description, includeDescription.isChecked());
 
     }
 
@@ -243,4 +258,34 @@ public class JotFragment extends Fragment implements TextView.OnEditorActionList
             }
         }
     };
+
+    @Override
+    public void beforeTextChanged(CharSequence charSequence, int i, int i2, int i3) {
+
+    }
+
+    @Override
+    public void onTextChanged(CharSequence charSequence, int i, int i2, int i3) {
+
+    }
+
+    @Override
+    public void afterTextChanged(Editable editable) {
+        if (editable.length() == 0) {
+            if (!descriptionHint.isEnabled()) {
+                descriptionHint.setEnabled(true);
+                descriptionHint.animate()
+                        .alpha(visibleHintAlpha)
+                        .setDuration(getResources().getInteger(android.R.integer.config_mediumAnimTime))
+                        .start();
+            }
+        }
+        else if (descriptionHint.isEnabled()) {
+            descriptionHint.setEnabled(false);
+            descriptionHint.animate()
+                    .alpha(0f)
+                    .setDuration(getResources().getInteger(android.R.integer.config_mediumAnimTime))
+                    .start();
+        }
+    }
 }

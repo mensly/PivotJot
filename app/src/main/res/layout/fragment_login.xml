@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="300dp"
-    android:layout_height="@dimen/login_height"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/login_height"
     android:background="@android:color/white"
     android:layout_margin="@dimen/login_margin"
     android:layout_gravity="center_horizontal"
@@ -11,6 +12,9 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:text="@string/login_prompt"
+        android:singleLine="true"
+        android:textSize="12sp"
+        android:gravity="center_vertical|start"
         android:layout_weight="1"/>
     <TextView
         android:layout_width="wrap_content"

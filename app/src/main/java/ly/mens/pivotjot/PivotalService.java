@@ -225,9 +225,20 @@ public class PivotalService extends IntentService {
     }
 
     public static void postStory(Context context, int projectId, String title,
-                                 StoryType storyType, boolean placeholderDescription) {
-        Story story = new Story(title, storyType, placeholderDescription ?
-                context.getString(R.string.description_placeholder) : "");
+                                 StoryType storyType, String description, boolean placeholderDescription) {
+        if (placeholderDescription) {
+            String placeholder = context.getString(R.string.description_placeholder);
+            if (description != null) {
+                description = String.format("%s\n\n%s", description, placeholder);
+            }
+            else {
+                description = placeholder;
+            }
+        }
+        else if (description != null) {
+            description = "";
+        }
+        Story story = new Story(title, storyType, description);
         context.startService(createIntent(context, ACTION_POST)
                 .putExtra(EXTRA_PROJECT_ID, projectId)
                 .putExtra(EXTRA_STORY, story));
